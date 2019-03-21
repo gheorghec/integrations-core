@@ -5,8 +5,8 @@ import copy
 
 from collections import defaultdict
 from six import iteritems
+
 import pystemd
-# from pystemd.systemd1 import Manager
 from pystemd.systemd1 import Unit
 
 from datadog_checks.base import AgentCheck, ConfigurationError
@@ -41,9 +41,6 @@ class SystemdCheck(AgentCheck):
         # }
 
     def check(self, instance):
-        # units_watched = instance.get('units', [])
-        # populate unit cache
-        # current_unit_status = self.get_all_unit_status()
         current_unit_status = defaultdict(dict)
         for u in self.units_watched:
             current_unit_status[u] = self.get_state_single_unit(u)
@@ -54,6 +51,7 @@ class SystemdCheck(AgentCheck):
         for unit in self.units_watched:
             if self.report_processes:
                 self.report_number_processes(unit, self.tags)
+                self.log.debug("Process information for unit {}".format(unit))
             self.send_service_checks(unit, self.get_state_single_unit(unit), self.tags)
 
         changed_units, created_units, deleted_units = self.list_status_change(current_unit_status)
@@ -77,8 +75,8 @@ class SystemdCheck(AgentCheck):
         unit_status = defaultdict(dict)
 
         for unit in list_unit_files:
-            unit_short_name = unit[0] # unit name/id
-            unit_state = unit[3] # unit state
+            unit_short_name = unit[0]  # unit name/id
+            unit_state = unit[3]  # unit state
             unit_status[unit_short_name] = unit_state
 
         return unit_status
@@ -137,9 +135,6 @@ class SystemdCheck(AgentCheck):
             try:
                 if state == b'active':
                     active_units += 1
-                    # if report_processes:
-                    #    self.report_number_processes(unit, tags)
-                    # active_units += 1
                 if state == b'inactive':
                     inactive_units += 1
             except pystemd.dbusexc.DBusInvalidArgsError as e:

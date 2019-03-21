@@ -24,8 +24,20 @@ def instance_collect_all():
         'units': [
             "ssh.service",
             "cron.service",
-            "networking.service"
+            "networking.service",
+            "systemnot.service"  # unit that does not exist
         ],
+        'tags': ['env:test'],
         'report_status': True,
+        'report_processes': True
+    }
+
+@pytest.fixture
+def instance_single_unit():
+    return {
+        'units': [
+            "ssh.service"
+        ],
+        'report_status': False,
         'report_processes': True
     }
