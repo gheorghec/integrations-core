@@ -9,4 +9,3 @@ from .common import HERE
 def mock_systemd_output(fname):
     with open(os.path.join(HERE, 'fixtures', fname)) as f:
         return f.read()
-

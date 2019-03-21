@@ -2,11 +2,9 @@
 # All rights reserved
 # Licensed under a 3-clause BSD style license (see LICENSE)
 
-import mock
 import pytest
 
 from datadog_checks.systemd import SystemdCheck
-from .mocks import mock_systemd_output
 
 
 def test_config_options(instance):
@@ -71,19 +69,6 @@ def test_report_statuses(aggregator, instance_collect_all):
     aggregator.assert_metric('systemd.units.inactive', value=1, tags=tags)
 
 
-def test_report_number_processes(aggregator, instance_single_unit):
-    check = SystemdCheck('systemd', {}, [instance_single_unit])
-    mock_output = mock.patch(
-        'datadog_checks.systemd.systemd.get_subprocess_output',
-        return_value=mock_systemd_output('debian-systemctl'),
-        __name__='get_subprocess_output'
-    )
-
-    with mock_output:
-        check.check(instance_single_unit)
-        aggregator.assert_metric('systemd.unit.processes', value=1, tags=['unit:ssh.service'])
-
-
 def test_get_all_unit_status(instance_collect_all):
     check = SystemdCheck('systemd', {}, [instance_collect_all])
-    assert isinstance(check.get_all_unit_status, dict) is True
+    assert isinstance(check.get_all_unit_status(), dict) is True

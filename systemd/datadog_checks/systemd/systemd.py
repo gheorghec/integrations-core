@@ -10,10 +10,7 @@ import pystemd
 from pystemd.systemd1 import Unit
 
 from datadog_checks.base import AgentCheck, ConfigurationError
-from datadog_checks.utils.subprocess_output import (
-    get_subprocess_output,
-    SubprocessOutputEmptyError,
-)
+from datadog_checks.base import ensure_unicode
 
 
 class SystemdCheck(AgentCheck):
@@ -49,9 +46,6 @@ class SystemdCheck(AgentCheck):
             self.unit_cache = current_unit_status
 
         for unit in self.units_watched:
-            if self.report_processes:
-                self.report_number_processes(unit, self.tags)
-                self.log.debug("Process information for unit {}".format(unit))
             self.send_service_checks(unit, self.get_state_single_unit(unit), self.tags)
 
         changed_units, created_units, deleted_units = self.list_status_change(current_unit_status)
@@ -132,10 +126,11 @@ class SystemdCheck(AgentCheck):
     def report_statuses(self, units, tags):
         active_units = inactive_units = 0
         for unit, state in iteritems(units):
+            state = ensure_unicode(state)
             try:
-                if state == b'active':
+                if state == 'active':
                     active_units += 1
-                if state == b'inactive':
+                if state == 'inactive':
                     inactive_units += 1
             except pystemd.dbusexc.DBusInvalidArgsError as e:
                 self.log.debug("Cannot retrieve unit status for {}, {}".format(unit, e))
@@ -176,16 +171,3 @@ class SystemdCheck(AgentCheck):
                 AgentCheck.CRITICAL,
                 tags=["unit:{}".format(unit_id)] + tags
             )
-
-    def report_number_processes(self, unit, tags):
-        """
-        We use systemctl directly here since the unit.Service.GetProcesses() method requires elevated privileges
-        """
-        systemctl_flags = ['status', unit]
-        try:
-            output = get_subprocess_output(["systemctl"] + systemctl_flags, self.log)
-            output_to_parse = output[0].split()
-            number_of_pids = output_to_parse.count(u'Process:')
-            self.gauge('systemd.unit.processes', number_of_pids, tags=["unit:{}".format(unit)] + tags)
-        except SubprocessOutputEmptyError:
-            self.log.exception("Error collecting systemctl stats.")

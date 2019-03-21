@@ -13,8 +13,7 @@ def instance():
             "cron.service",
             "networking.service"
         ],
-        'report_status': False,
-        'report_processes': True
+        'report_status': False
     }
 
 
@@ -25,12 +24,11 @@ def instance_collect_all():
             "ssh.service",
             "cron.service",
             "networking.service",
-            "systemnot.service"  # unit that does not exist
         ],
         'tags': ['env:test'],
-        'report_status': True,
-        'report_processes': True
+        'report_status': True
     }
+
 
 @pytest.fixture
 def instance_single_unit():
@@ -38,6 +36,5 @@ def instance_single_unit():
         'units': [
             "ssh.service"
         ],
-        'report_status': False,
-        'report_processes': True
+        'report_status': False
     }
