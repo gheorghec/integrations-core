@@ -28,13 +28,3 @@ def instance_collect_all():
         'tags': ['env:test'],
         'report_status': True
     }
-
-
-@pytest.fixture
-def instance_single_unit():
-    return {
-        'units': [
-            "ssh.service"
-        ],
-        'report_status': False
-    }
