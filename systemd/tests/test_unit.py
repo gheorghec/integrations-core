@@ -11,7 +11,6 @@ def test_config_options(instance):
     check = SystemdCheck('systemd', {}, [instance])
 
     assert check.report_status is False
-    assert check.report_processes is True
     assert len(check.units_watched) == 3
 
 
@@ -38,7 +37,6 @@ def test_cache(instance):
 
     # check that we are getting changed units - returned_units is a tuple of 3 elements
     changed_units, created_units, deleted_units = check.list_status_change(current_unit_status)
-    assert changed_units is not None
     assert changed_units['cron.service'] == 'inactive'
     assert len(created_units) == 0
     assert len(deleted_units) == 0
@@ -48,10 +46,25 @@ def test_cache(instance):
     current_unit_status = {'ssh.service': 'active', 'networking.service': 'inactive'}
     # check that we are getting deleted units
     changed_units, created_units, deleted_units = check.list_status_change(current_unit_status)
-    assert deleted_units is not None
     assert deleted_units['cron.service'] == 'active'
     assert len(created_units) == 0
     assert len(changed_units) == 0
+
+    # check created units
+    check.unit_cache = {'ssh.service': 'active', 'networking.service': 'inactive'}
+    current_unit_status = {'ssh.service': 'active', 'cron.service': 'active', 'networking.service': 'inactive'}
+    changed_units, created_units, deleted_units = check.list_status_change(current_unit_status)
+    assert created_units['cron.service'] == 'active'
+    assert len(changed_units) == 0
+    assert len(deleted_units) == 0
+
+    # check created units, deleted units and changed units
+    check.unit_cache = {'ssh.service': 'active', 'networking.service': 'inactive', 'cron.service': 'active'}
+    current_unit_status = {'docker.service': 'active', 'cron.service': 'inactive', 'networking.service': 'inactive'}
+    changed_units, created_units, deleted_units = check.list_status_change(current_unit_status)
+    assert created_units['docker.service'] == 'active'
+    assert deleted_units['ssh.service'] == 'active'
+    assert changed_units['cron.service'] == 'inactive'
 
 
 def test_report_statuses(aggregator, instance_collect_all):
