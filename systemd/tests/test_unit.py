@@ -85,3 +85,4 @@ def test_report_statuses(aggregator, instance_collect_all):
 def test_get_all_unit_status(instance_collect_all):
     check = SystemdCheck('systemd', {}, [instance_collect_all])
     assert isinstance(check.get_all_unit_status(), dict) is True
+    assert len(check.get_all_unit_status()) >= 1
